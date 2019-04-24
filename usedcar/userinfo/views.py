@@ -21,6 +21,7 @@ def signin(request):
 
 
 def register(request):
+    # 如果有登录信息返回主页
     if request.user.is_authenticated():
         return redirect('/')
     else:
@@ -32,6 +33,7 @@ def login_(request):
         username = request.POST.get('username', '')
         password = request.POST.get('userpwd', '')
         user = auth.authenticate(username=username, password=password)
+        # auth方法自动验证用户名和密码是否一致,不一致返回none
         if user is not None and user.is_active:
             auth.login(request, user)
             return redirect('/')
@@ -47,14 +49,18 @@ def register_(request):
     if request.method == 'POST':
         new_user.username = request.POST.get('username')
         try:
+            # 从用户表取用户名信息
             olduser = UserInfo.objects.filter(username=new_user.username)
+            # 用户表用户名字大于０的话表示存在这个用户名
             if len(olduser) > 0:
                 return render(request, 'register.html', {'message': '用户名已经存在'})
         except ObjectDoesNotExist as e:
             logging.warning(e)
+        # 判断两次密码输入是否一致
         if request.POST.get('userpwd') != request.POST.get('reuserpwd'):
             return render(request, 'register.html', {'message': '两次输入的密码不一致'})
         new_user.password = make_password(request.POST.get('userpwd'), auth_check, 'pbkdf2_sha1')
+        # 从post返回的数据中判断用户是买还是卖
         if 'tobuy' in request.POST:
             return render(request, 'buyregister.html')
         if 'tosale' in request.POST:
